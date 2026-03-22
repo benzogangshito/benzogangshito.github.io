@@ -448,7 +448,7 @@ body::before {
     <div class="method" data-method="card">
       <span class="m-icon">💳</span>
       <span class="m-name">Карта</span>
-      <span class="m-desc">Переводом</span>
+      <span class="m-desc">Monobank</span>
     </div>
   </div>
 
@@ -466,7 +466,7 @@ body::before {
   <div class="pay-modal">
     <div class="pay-box">
       <div class="pay-head">
-        <div class="pay-badge">Переводом</div>
+        <div class="pay-badge">Monobank</div>
         <div class="amount" id="payAmount">0.00 грн</div>
         <div class="pay-sub" id="paySub">Сума до оплати</div>
       </div>
@@ -620,67 +620,55 @@ if (tg && tg.colorScheme === 'light') {
 }
 
 async function startCardPayment() {
-  console.log("CARD PAYMENT START");
-
-  const realUserId = tg?.initDataUnsafe?.user?.id;
-  if (!realUserId) {
-    const modal = document.getElementById('paymentModal');
-    modal.style.display = 'block';
-
-    document.getElementById('payAmount').innerText = `${selectedPack.uah} грн`;
-    document.getElementById('payStatus').innerHTML =
-      "<div class='error'>Не вдалося отримати Telegram ID. Відкрийте Mini App саме через Telegram.</div>";
-    return;
-  }
+  console.log("START PAYMENT");
 
   const modal = document.getElementById('paymentModal');
   modal.style.display = 'block';
 
-  document.getElementById('payAmount').innerText = `${selectedPack.uah} грн`;
-  document.getElementById('paySub').innerText = 'Створюємо замовлення...';
   document.getElementById('payStatus').innerHTML = '';
 
-  let polling;
+  // базовая сумма
+  document.getElementById('payAmount').innerText =
+    Number(selectedPack.uah).toFixed(2) + " грн";
+
+  // получаем user id
+  const user = tg?.initDataUnsafe?.user;
+  console.log("TG USER:", user);
+
+  if (!user || !user.id) {
+    document.getElementById('payStatus').innerHTML =
+      "<div class='error'>Відкрийте Mini App через офіційний Telegram</div>";
+    return;
+  }
 
   try {
     const res = await fetch(`${API_BASE}/api/create-order`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         amount: Number(selectedPack.uah),
         pack_id: selectedPack.id,
-        user_id: realUserId
+        user_id: user.id
       })
     });
 
-    const raw = await res.text();
-    console.log("CREATE ORDER RAW:", raw);
+    const data = await res.json();
+    console.log("ORDER:", data);
 
-    let data = {};
-    try {
-      data = JSON.parse(raw);
-    } catch (e) {
+    if (!data.id) {
       document.getElementById('payStatus').innerHTML =
-        "<div class='error'>Сервер повернув некоректну відповідь</div>";
+        "<div class='error'>Помилка створення замовлення</div>";
       return;
     }
 
-    if (!res.ok || !data.id) {
-      document.getElementById('payStatus').innerHTML =
-        `<div class='error'>${data.error || 'Помилка створення замовлення'}</div>`;
-      return;
-    }
+    // 🔥 ВАЖНО — ОБНОВЛЯЕМ СУММУ
+    document.getElementById('payAmount').innerText =
+      Number(data.amount).toFixed(2) + " грн";
 
     const orderId = data.id;
-    const realAmount = Number(data.amount);
-
-    // ВАЖНО: показываем именно уникальную сумму из backend
-    document.getElementById('payAmount').innerText = `${realAmount.toFixed(2)} грн`;
-    document.getElementById('paySub').innerText = 'Оплатіть точну суму до копійки';
 
     let timeLeft = 600;
     const timerEl = document.getElementById('payTimer');
-    timerEl.innerText = '10:00';
 
     const timer = setInterval(() => {
       timeLeft--;
@@ -697,39 +685,34 @@ async function startCardPayment() {
         clearInterval(polling);
 
         document.getElementById('payStatus').innerHTML =
-          "<div class='error'>Час очікування минув. Створіть нове замовлення.</div>";
+          "<div class='error'>Час вийшов</div>";
       }
     }, 1000);
 
-    polling = setInterval(async () => {
-      try {
-        const r = await fetch(`${API_BASE}/api/order-status?id=${orderId}`);
-        const d = await r.json();
+    const polling = setInterval(async () => {
+      const r = await fetch(`${API_BASE}/api/order-status?id=${orderId}`);
+      const d = await r.json();
 
-        console.log("ORDER STATUS:", d);
+      console.log("STATUS:", d);
 
-        if (d.status === 'paid') {
-          clearInterval(timer);
-          clearInterval(polling);
+      if (d.status === "paid") {
+        clearInterval(timer);
+        clearInterval(polling);
 
-          document.getElementById('paySub').innerText = 'Платіж підтверджено';
-          document.getElementById('payStatus').innerHTML =
-            "<div class='success'>Оплату успішно отримано ✅</div>";
+        document.getElementById('payStatus').innerHTML =
+          "<div class='success'>Оплачено ✅</div>";
 
-          setTimeout(() => {
-            location.reload();
-          }, 1600);
-        }
-      } catch (e) {
-        console.error("STATUS ERROR:", e);
+        setTimeout(() => location.reload(), 1200);
       }
     }, 3000);
 
   } catch (e) {
-    console.error("CREATE ORDER ERROR:", e);
+    console.error(e);
+
     document.getElementById('payStatus').innerHTML =
-      "<div class='error'>Помилка з'єднання з сервером</div>";
+      "<div class='error'>Помилка з'єднання</div>";
   }
+}
 }
 </script>
 </body>
