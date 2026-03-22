@@ -619,7 +619,7 @@ async function startCardPayment() {
       body: JSON.stringify({
         amount: amount,
         pack_id: selectedPack.id,
-        user_id: tg?.initDataUnsafe?.user?.id || 123456789
+        user_id: tg?.initDataUnsafe?.user?.id
       })
     });
 
