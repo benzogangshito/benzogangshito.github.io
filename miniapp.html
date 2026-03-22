@@ -43,7 +43,6 @@ body::before {
 
 .wrap { position: relative; z-index: 1; padding: 0 16px; }
 
-/* Header */
 .header {
   text-align: center;
   padding: 28px 0 20px;
@@ -75,7 +74,6 @@ body::before {
   margin-top: 4px;
 }
 
-/* Balance bar */
 .balance-bar {
   background: var(--surface);
   border: 1px solid rgba(200,160,255,0.12);
@@ -95,7 +93,6 @@ body::before {
 }
 .balance-bar .val span { font-size: 11px; font-weight: 400; color: var(--muted); margin-left: 4px; }
 
-/* Section label */
 .sec-label {
   font-size: 11px;
   font-weight: 500;
@@ -105,7 +102,6 @@ body::before {
   margin-bottom: 10px;
 }
 
-/* Packs */
 .packs { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
 
 .pack {
@@ -222,10 +218,17 @@ body::before {
   animation: fadeUp 0.3s ease;
 }
 
+.amount {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 24px;
+}
+
 .card-number {
   font-size: 16px;
   margin-top: 10px;
   color: var(--muted);
+  cursor: pointer;
+  user-select: all;
 }
 
 .timer {
@@ -247,7 +250,6 @@ body::before {
 .success { color: #4ecb71; margin-top: 10px; }
 .error { color: #ff6b6b; margin-top: 10px; }
 
-/* Payment methods */
 .methods { display: flex; gap: 8px; margin-bottom: 24px; }
 .method {
   flex: 1;
@@ -271,7 +273,6 @@ body::before {
 .method .m-name { font-size: 12px; font-weight: 500; }
 .method .m-desc { font-size: 10px; color: var(--muted); text-align: center; }
 
-/* Terms */
 .terms-row {
   display: flex;
   align-items: flex-start;
@@ -307,7 +308,6 @@ body::before {
 }
 .terms-text a { color: var(--accent); text-decoration: none; }
 
-/* Pay button */
 .pay-btn {
   width: 100%;
   padding: 18px;
@@ -371,23 +371,19 @@ body::before {
 
 <div class="wrap">
 
-  <!-- Header -->
   <div class="header">
     <div class="icon">🌟</div>
     <h1>Поповнення балансу</h1>
     <p>Більше зірок — більше можливостей</p>
   </div>
 
-  <!-- Balance -->
   <div class="balance-bar">
     <span class="label">Поточний баланс</span>
     <span class="val" id="balanceVal">0 <span>🌟</span></span>
   </div>
 
-  <!-- Packs -->
   <div class="sec-label">Оберіть пакет</div>
   <div class="packs" id="packs">
-
     <div class="pack active" data-id="pack_10" data-credits="10" data-stars="99" data-uah="54">
       <div class="radio-dot"></div>
       <div class="pack-info">
@@ -435,10 +431,8 @@ body::before {
         <div class="usd">~595 ₴</div>
       </div>
     </div>
-
   </div>
 
-  <!-- Payment methods -->
   <div class="sec-label">Спосіб оплати</div>
   <div class="methods">
     <div class="method active" data-method="stars">
@@ -455,10 +449,9 @@ body::before {
       <span class="m-icon">💳</span>
       <span class="m-name">Карта</span>
       <span class="m-desc">Monobank</span>
-  </div>
+    </div>
   </div>
 
-  <!-- Terms -->
   <label class="terms-row" id="termsRow">
     <div class="custom-check" id="checkBox"></div>
     <span class="terms-text">
@@ -466,47 +459,58 @@ body::before {
     </span>
   </label>
 
-  <!-- Pay button -->
   <button class="pay-btn" id="payBtn" disabled>Оплатити</button>
+</div>
 
+<div id="paymentModal" style="display:none;">
+  <div class="pay-modal">
+    <div class="pay-box">
+      <div class="amount" id="payAmount"></div>
+      <div class="card-number" id="cardNumber">4441 1110 4788 4568</div>
+      <div class="spinner"></div>
+      <div class="timer" id="payTimer">10:00</div>
+      <div id="payStatus"></div>
+    </div>
+  </div>
 </div>
 
 <script>
+const API_BASE = 'https://7b7a-77-91-96-208.ngrok-free.app'; // ЗАМЕНИ НА СВОЙ NGROK URL
+
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
 
-// Баланс з URL (?balance=42)
 const urlParams = new URLSearchParams(window.location.search);
 document.getElementById('balanceVal').innerHTML =
   `${urlParams.get('balance') || '0'} <span>🌟</span>`;
 
-// ── Стан ──────────────────────────────────────────────────────────────────────
 const firstPack = document.querySelector('.pack');
 let selectedPack = {
-  id:      firstPack.dataset.id,
+  id: firstPack.dataset.id,
   credits: firstPack.dataset.credits,
-  stars:   firstPack.dataset.stars,
-  uah:     firstPack.dataset.uah,
+  stars: firstPack.dataset.stars,
+  uah: firstPack.dataset.uah,
 };
+
 let selectedMethod = 'stars';
 let agreed = false;
 
-// ── Пакети ────────────────────────────────────────────────────────────────────
 document.querySelectorAll('.pack').forEach(p => {
   p.addEventListener('click', () => {
     document.querySelectorAll('.pack').forEach(x => x.classList.remove('active'));
     p.classList.add('active');
+
     selectedPack = {
-      id:      p.dataset.id,
+      id: p.dataset.id,
       credits: p.dataset.credits,
-      stars:   p.dataset.stars,
-      uah:     p.dataset.uah,
+      stars: p.dataset.stars,
+      uah: p.dataset.uah,
     };
+
     updateBtn();
   });
 });
 
-// ── Методи оплати ─────────────────────────────────────────────────────────────
 document.querySelectorAll('.method').forEach(m => {
   m.addEventListener('click', () => {
     document.querySelectorAll('.method').forEach(x => x.classList.remove('active'));
@@ -516,7 +520,6 @@ document.querySelectorAll('.method').forEach(m => {
   });
 });
 
-// ── Чекбокс ───────────────────────────────────────────────────────────────────
 document.getElementById('termsRow').addEventListener('click', (e) => {
   if (e.target.tagName === 'A') return;
   agreed = !agreed;
@@ -524,48 +527,60 @@ document.getElementById('termsRow').addEventListener('click', (e) => {
   updateBtn();
 });
 
-// ── Оновлення кнопки ──────────────────────────────────────────────────────────
+document.getElementById('cardNumber').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(document.getElementById('cardNumber').innerText.trim());
+    document.getElementById('payStatus').innerHTML =
+      "<div class='success'>Карту скопійовано 📋</div>";
+  } catch (e) {
+    console.error('clipboard error:', e);
+  }
+});
+
 function updateBtn() {
   const btn = document.getElementById('payBtn');
   btn.disabled = !agreed;
-  if (agreed) {
-    if (selectedMethod === 'stars') {
-       btn.textContent = `Оплатити ⭐ ${selectedPack.stars} Stars (~${selectedPack.uah} ₴)`;
-       } else if (selectedMethod === 'crypto') {
-       btn.textContent = `Оплатити 💎 USDT`;
-       } else if (selectedMethod === 'card') {
-           btn.textContent = `Оплатити 💳 ${selectedPack.uah} ₴`;
-           }
-  } else {
+
+  if (!agreed) {
     btn.textContent = 'Оплатити';
+    return;
+  }
+
+  if (selectedMethod === 'stars') {
+    btn.textContent = `Оплатити ⭐ ${selectedPack.stars} Stars (~${selectedPack.uah} ₴)`;
+  } else if (selectedMethod === 'crypto') {
+    btn.textContent = `Оплатити 💎 USDT`;
+  } else if (selectedMethod === 'card') {
+    btn.textContent = `Оплатити 💳 ${selectedPack.uah} ₴`;
   }
 }
 
-// ── Натискання Оплатити ───────────────────────────────────────────────────────
 document.getElementById('payBtn').addEventListener('click', () => {
-    if (!agreed) return;
-    
-    if (selectedMethod === 'card') {
-  startCardPayment();
-  return;
-}
+  console.log("PAY CLICK", { agreed, selectedMethod, selectedPack });
+
+  if (!agreed) return;
+
+  if (selectedMethod === 'card') {
+    startCardPayment();
+    return;
+  }
 
   const btn = document.getElementById('payBtn');
   btn.classList.add('loading');
   btn.disabled = true;
 
   const payload = JSON.stringify({
-    action:  'topup',
+    action: 'topup',
     pack_id: selectedPack.id,
-    method:  selectedMethod,
+    method: selectedMethod,
     credits: selectedPack.credits,
-    stars:   selectedPack.stars,
+    stars: selectedPack.stars,
   });
 
   if (tg && tg.sendData) {
     try {
       tg.sendData(payload);
-    } catch(e) {
+    } catch (e) {
       console.error('sendData error:', e);
       btn.classList.remove('loading');
       btn.disabled = false;
@@ -578,7 +593,6 @@ document.getElementById('payBtn').addEventListener('click', () => {
   }
 });
 
-// ── Тема ──────────────────────────────────────────────────────────────────────
 if (tg && tg.colorScheme === 'light') {
   document.documentElement.style.setProperty('--bg', '#f5f5f7');
   document.documentElement.style.setProperty('--surface', '#ffffff');
@@ -587,82 +601,89 @@ if (tg && tg.colorScheme === 'light') {
 }
 
 async function startCardPayment() {
+  console.log("CARD PAYMENT START");
+
   const modal = document.getElementById('paymentModal');
   modal.style.display = 'block';
 
-  const amount = selectedPack.uah;
-
+  const amount = Number(selectedPack.uah);
   document.getElementById('payAmount').innerText = amount + ' грн';
+  document.getElementById('payStatus').innerHTML = '';
 
-  // создаём заказ
-  const res = await fetch('/api/create-order', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      amount: amount,
-      pack_id: selectedPack.id
-    })
-  });
+  let polling;
 
-  const data = await res.json();
-  const orderId = data.id;
+  try {
+    const res = await fetch(`${API_BASE}/api/create-order`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount: amount,
+        pack_id: selectedPack.id,
+        user_id: tg?.initDataUnsafe?.user?.id || 123456789
+      })
+    });
 
-  // ⏱️ таймер
-  let timeLeft = 600;
-  const timerEl = document.getElementById('payTimer');
+    const data = await res.json();
+    console.log("CREATE ORDER RESPONSE:", data);
 
-  const timer = setInterval(() => {
-    timeLeft--;
-
-    const m = Math.floor(timeLeft / 60);
-    const s = timeLeft % 60;
-
-    timerEl.innerText =
-      String(m).padStart(2,'0') + ":" +
-      String(s).padStart(2,'0');
-
-    if (timeLeft <= 0) {
-      clearInterval(timer);
-      clearInterval(polling);
-
+    const orderId = data.id;
+    if (!orderId) {
       document.getElementById('payStatus').innerHTML =
-        "<div class='error'>Час вийшов</div>";
+        "<div class='error'>Помилка створення замовлення</div>";
+      return;
     }
-  }, 1000);
 
-  // 🔄 проверка оплаты
-  const polling = setInterval(async () => {
-    const r = await fetch(`/api/order-status?id=${orderId}`);
-    const d = await r.json();
+    let timeLeft = 600;
+    const timerEl = document.getElementById('payTimer');
+    timerEl.innerText = '10:00';
 
-    if (d.status === 'paid') {
-      clearInterval(timer);
-      clearInterval(polling);
+    const timer = setInterval(() => {
+      timeLeft--;
 
-      document.getElementById('payStatus').innerHTML =
-        "<div class='success'>Оплачено ✅</div>";
+      const m = Math.floor(timeLeft / 60);
+      const s = timeLeft % 60;
 
-      setTimeout(() => {
-        location.reload();
-      }, 1500);
-    }
-  }, 3000);
+      timerEl.innerText =
+        String(m).padStart(2, '0') + ":" +
+        String(s).padStart(2, '0');
+
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        clearInterval(polling);
+        document.getElementById('payStatus').innerHTML =
+          "<div class='error'>Час вийшов</div>";
+      }
+    }, 1000);
+
+    polling = setInterval(async () => {
+      try {
+        const r = await fetch(`${API_BASE}/api/order-status?id=${orderId}`);
+        const d = await r.json();
+
+        console.log("ORDER STATUS:", d);
+
+        if (d.status === 'paid') {
+          clearInterval(timer);
+          clearInterval(polling);
+
+          document.getElementById('payStatus').innerHTML =
+            "<div class='success'>Оплачено ✅</div>";
+
+          setTimeout(() => {
+            location.reload();
+          }, 1500);
+        }
+      } catch (e) {
+        console.error("STATUS ERROR:", e);
+      }
+    }, 3000);
+
+  } catch (e) {
+    console.error("CREATE ORDER ERROR:", e);
+    document.getElementById('payStatus').innerHTML =
+      "<div class='error'>Помилка з'єднання з сервером</div>";
+  }
 }
 </script>
-<div id="paymentModal" style="display:none;">
-  <div class="pay-modal">
-    <div class="pay-box">
-
-      <div class="amount" id="payAmount"></div>
-      <div class="card-number">4444 1111 2222 3333</div>
-
-      <div class="spinner"></div>
-      <div class="timer" id="payTimer">10:00</div>
-
-      <div id="payStatus"></div>
-
-    </div>
-  </div>
-</div>
 </body>
 </html>
