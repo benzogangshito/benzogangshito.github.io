@@ -465,10 +465,29 @@ body::before {
 <div id="paymentModal" style="display:none;">
   <div class="pay-modal">
     <div class="pay-box">
-      <div class="amount" id="payAmount"></div>
-      <div class="card-number" id="cardNumber">4441 1110 4788 4568</div>
+      <div class="pay-head">
+        <div class="pay-badge">Monobank</div>
+        <div class="amount" id="payAmount">0.00 грн</div>
+        <div class="pay-sub" id="paySub">Сума до оплати</div>
+      </div>
+
+      <div class="card-wrap">
+        <div class="card-label">Номер картки</div>
+        <div class="card-number" id="cardNumber">4441 1110 4788 4568</div>
+        <div class="card-hint">Натисніть, щоб скопіювати</div>
+      </div>
+
+      <div class="pay-warning">
+        <div class="warn-title">Важливо</div>
+        <div class="warn-text">
+          Оплатіть <b>точно цю суму до копійки</b>, як показано вище.
+          Якщо сума буде іншою, платіж не зарахується автоматично.
+        </div>
+      </div>
+
       <div class="spinner"></div>
       <div class="timer" id="payTimer">10:00</div>
+
       <div id="payStatus"></div>
     </div>
   </div>
@@ -603,11 +622,22 @@ if (tg && tg.colorScheme === 'light') {
 async function startCardPayment() {
   console.log("CARD PAYMENT START");
 
+  const realUserId = tg?.initDataUnsafe?.user?.id;
+  if (!realUserId) {
+    const modal = document.getElementById('paymentModal');
+    modal.style.display = 'block';
+
+    document.getElementById('payAmount').innerText = `${selectedPack.uah} грн`;
+    document.getElementById('payStatus').innerHTML =
+      "<div class='error'>Не вдалося отримати Telegram ID. Відкрийте Mini App саме через Telegram.</div>";
+    return;
+  }
+
   const modal = document.getElementById('paymentModal');
   modal.style.display = 'block';
 
-  const amount = Number(selectedPack.uah);
-  document.getElementById('payAmount').innerText = amount + ' грн';
+  document.getElementById('payAmount').innerText = `${selectedPack.uah} грн`;
+  document.getElementById('paySub').innerText = 'Створюємо замовлення...';
   document.getElementById('payStatus').innerHTML = '';
 
   let polling;
@@ -617,21 +647,36 @@ async function startCardPayment() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        amount: amount,
+        amount: Number(selectedPack.uah),
         pack_id: selectedPack.id,
-        user_id: tg?.initDataUnsafe?.user?.id
+        user_id: realUserId
       })
     });
 
-    const data = await res.json();
-    console.log("CREATE ORDER RESPONSE:", data);
+    const raw = await res.text();
+    console.log("CREATE ORDER RAW:", raw);
 
-    const orderId = data.id;
-    if (!orderId) {
+    let data = {};
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
       document.getElementById('payStatus').innerHTML =
-        "<div class='error'>Помилка створення замовлення</div>";
+        "<div class='error'>Сервер повернув некоректну відповідь</div>";
       return;
     }
+
+    if (!res.ok || !data.id) {
+      document.getElementById('payStatus').innerHTML =
+        `<div class='error'>${data.error || 'Помилка створення замовлення'}</div>`;
+      return;
+    }
+
+    const orderId = data.id;
+    const realAmount = Number(data.amount);
+
+    // ВАЖНО: показываем именно уникальную сумму из backend
+    document.getElementById('payAmount').innerText = `${realAmount.toFixed(2)} грн`;
+    document.getElementById('paySub').innerText = 'Оплатіть точну суму до копійки';
 
     let timeLeft = 600;
     const timerEl = document.getElementById('payTimer');
@@ -650,8 +695,9 @@ async function startCardPayment() {
       if (timeLeft <= 0) {
         clearInterval(timer);
         clearInterval(polling);
+
         document.getElementById('payStatus').innerHTML =
-          "<div class='error'>Час вийшов</div>";
+          "<div class='error'>Час очікування минув. Створіть нове замовлення.</div>";
       }
     }, 1000);
 
@@ -666,12 +712,13 @@ async function startCardPayment() {
           clearInterval(timer);
           clearInterval(polling);
 
+          document.getElementById('paySub').innerText = 'Платіж підтверджено';
           document.getElementById('payStatus').innerHTML =
-            "<div class='success'>Оплачено ✅</div>";
+            "<div class='success'>Оплату успішно отримано ✅</div>";
 
           setTimeout(() => {
             location.reload();
-          }, 1500);
+          }, 1600);
         }
       } catch (e) {
         console.error("STATUS ERROR:", e);
