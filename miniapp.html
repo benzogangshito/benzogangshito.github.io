@@ -202,6 +202,51 @@ body::before {
   text-align: right;
 }
 
+.pay-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.pay-box {
+  background: var(--surface);
+  padding: 24px;
+  border-radius: var(--r);
+  width: 90%;
+  max-width: 340px;
+  text-align: center;
+  animation: fadeUp 0.3s ease;
+}
+
+.card-number {
+  font-size: 16px;
+  margin-top: 10px;
+  color: var(--muted);
+}
+
+.timer {
+  margin-top: 15px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.spinner {
+  margin: 20px auto;
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255,255,255,0.1);
+  border-top: 4px solid var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.success { color: #4ecb71; margin-top: 10px; }
+.error { color: #ff6b6b; margin-top: 10px; }
+
 /* Payment methods */
 .methods { display: flex; gap: 8px; margin-bottom: 24px; }
 .method {
@@ -406,6 +451,11 @@ body::before {
       <span class="m-name">CryptoBot</span>
       <span class="m-desc">USDT / BTC</span>
     </div>
+    <div class="method" data-method="card">
+      <span class="m-icon">💳</span>
+      <span class="m-name">Карта</span>
+      <span class="m-desc">Monobank</span>
+  </div>
   </div>
 
   <!-- Terms -->
@@ -480,10 +530,12 @@ function updateBtn() {
   btn.disabled = !agreed;
   if (agreed) {
     if (selectedMethod === 'stars') {
-      btn.textContent = `Оплатити ⭐ ${selectedPack.stars} Stars (~${selectedPack.uah} ₴)`;
-    } else {
-      btn.textContent = `Оплатити 💎 USDT`;
-    }
+       btn.textContent = `Оплатити ⭐ ${selectedPack.stars} Stars (~${selectedPack.uah} ₴)`;
+       } else if (selectedMethod === 'crypto') {
+       btn.textContent = `Оплатити 💎 USDT`;
+       } else if (selectedMethod === 'card') {
+           btn.textContent = `Оплатити 💳 ${selectedPack.uah} ₴`;
+           }
   } else {
     btn.textContent = 'Оплатити';
   }
@@ -491,7 +543,12 @@ function updateBtn() {
 
 // ── Натискання Оплатити ───────────────────────────────────────────────────────
 document.getElementById('payBtn').addEventListener('click', () => {
-  if (!agreed) return;
+    if (!agreed) return;
+    
+    if (selectedMethod === 'card') {
+  startCardPayment();
+  return;
+}
 
   const btn = document.getElementById('payBtn');
   btn.classList.add('loading');
@@ -528,6 +585,84 @@ if (tg && tg.colorScheme === 'light') {
   document.documentElement.style.setProperty('--text', '#1a1a2e');
   document.documentElement.style.setProperty('--muted', '#888');
 }
+
+async function startCardPayment() {
+  const modal = document.getElementById('paymentModal');
+  modal.style.display = 'block';
+
+  const amount = selectedPack.uah;
+
+  document.getElementById('payAmount').innerText = amount + ' грн';
+
+  // создаём заказ
+  const res = await fetch('/api/create-order', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      amount: amount,
+      pack_id: selectedPack.id
+    })
+  });
+
+  const data = await res.json();
+  const orderId = data.id;
+
+  // ⏱️ таймер
+  let timeLeft = 600;
+  const timerEl = document.getElementById('payTimer');
+
+  const timer = setInterval(() => {
+    timeLeft--;
+
+    const m = Math.floor(timeLeft / 60);
+    const s = timeLeft % 60;
+
+    timerEl.innerText =
+      String(m).padStart(2,'0') + ":" +
+      String(s).padStart(2,'0');
+
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      clearInterval(polling);
+
+      document.getElementById('payStatus').innerHTML =
+        "<div class='error'>Час вийшов</div>";
+    }
+  }, 1000);
+
+  // 🔄 проверка оплаты
+  const polling = setInterval(async () => {
+    const r = await fetch(`/api/order-status?id=${orderId}`);
+    const d = await r.json();
+
+    if (d.status === 'paid') {
+      clearInterval(timer);
+      clearInterval(polling);
+
+      document.getElementById('payStatus').innerHTML =
+        "<div class='success'>Оплачено ✅</div>";
+
+      setTimeout(() => {
+        location.reload();
+      }, 1500);
+    }
+  }, 3000);
+}
 </script>
+<div id="paymentModal" style="display:none;">
+  <div class="pay-modal">
+    <div class="pay-box">
+
+      <div class="amount" id="payAmount"></div>
+      <div class="card-number">4444 1111 2222 3333</div>
+
+      <div class="spinner"></div>
+      <div class="timer" id="payTimer">10:00</div>
+
+      <div id="payStatus"></div>
+
+    </div>
+  </div>
+</div>
 </body>
 </html>
