@@ -588,6 +588,28 @@ balanceEl.innerHTML = `${urlParams.get('balance') || '0'} <span>🌟</span>`;
 
 async function loadActualBalance() {
   const user = tg?.initDataUnsafe?.user;
+  console.log("TG USER:", user);
+
+  if (!user || !user.id) {
+    console.log("NO USER ID");
+    return;
+  }
+
+  try {
+    const url = `${API_BASE}/api/balance?user_id=${user.id}`;
+    console.log("BALANCE URL:", url);
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    console.log("BALANCE RESPONSE:", data);
+
+    document.getElementById('balanceVal').innerHTML =
+      `${data.balance || 0} <span>🌟</span>`;
+  } catch (e) {
+    console.error("balance load error:", e);
+  }
+}
   if (!user || !user.id) return;
 
   try {
