@@ -220,37 +220,116 @@ body::before {
   border: 1px solid rgba(255,255,255,0.06);
 }
 
+.pay-head {
+  margin-bottom: 16px;
+}
+
+.pay-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  margin-bottom: 10px;
+}
+
 .amount {
   font-family: 'Unbounded', sans-serif;
-  font-size: 24px;
+  font-size: 34px;
+  line-height: 1.05;
+  letter-spacing: -1px;
+  margin-bottom: 6px;
+  color: #fff;
+}
+
+.pay-sub {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.card-wrap {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 18px;
+  padding: 14px 12px;
+  margin: 14px 0 12px;
+}
+
+.card-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
 }
 
 .card-number {
-  font-size: 16px;
-  margin-top: 10px;
-  color: var(--muted);
+  font-size: 24px;
+  line-height: 1.15;
+  letter-spacing: 0.5px;
+  color: #fff;
   cursor: pointer;
   user-select: all;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.card-hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.pay-warning {
+  background: rgba(255, 209, 102, 0.08);
+  border: 1px solid rgba(255, 209, 102, 0.16);
+  border-radius: 16px;
+  padding: 12px;
+  margin: 12px 0 10px;
+  text-align: left;
+}
+
+.warn-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+
+.warn-text {
+  font-size: 14px;
+  line-height: 1.45;
+  color: #eae6ff;
 }
 
 .timer {
-  margin-top: 15px;
+  margin-top: 4px;
   color: var(--accent);
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1;
 }
 
 .spinner {
-  margin: 20px auto;
-  width: 40px;
-  height: 40px;
+  margin: 18px auto 14px;
+  width: 42px;
+  height: 42px;
   border: 4px solid rgba(255,255,255,0.1);
   border-top: 4px solid var(--accent);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
-.success { color: #4ecb71; margin-top: 10px; }
-.error { color: #ff6b6b; margin-top: 10px; }
+.success,
+.error {
+  margin-top: 14px;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.success { color: #4ecb71; }
+.error { color: #ff6b6b; }
 
 .methods { display: flex; gap: 8px; margin-bottom: 24px; }
 .method {
@@ -496,14 +575,16 @@ body::before {
 </div>
 
 <script>
-const API_BASE = 'https://webhook-paq0.onrender.com'; // ЗАМЕНИ НА СВОЙ NGROK URL
+const API_BASE = 'https://webhook-paq0.onrender.com';
 
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
 
+const balanceEl = document.getElementById('balanceVal');
+
+// fallback из URL
 const urlParams = new URLSearchParams(window.location.search);
-document.getElementById('balanceVal').innerHTML =
-  `${urlParams.get('balance') || '0'} <span>🌟</span>`;
+balanceEl.innerHTML = `${urlParams.get('balance') || '0'} <span>🌟</span>`;
 
 async function loadActualBalance() {
   const user = tg?.initDataUnsafe?.user;
@@ -513,8 +594,7 @@ async function loadActualBalance() {
     const res = await fetch(`${API_BASE}/api/balance?user_id=${user.id}`);
     const data = await res.json();
 
-    document.getElementById('balanceVal').innerHTML =
-      `${data.balance || 0} <span>🌟</span>`;
+    balanceEl.innerHTML = `${data.balance || 0} <span>🌟</span>`;
   } catch (e) {
     console.error("balance load error:", e);
   }
@@ -639,24 +719,12 @@ if (tg && tg.colorScheme === 'light') {
 }
 
 async function startCardPayment() {
-  console.log("START PAYMENT");
-
-  const modal = document.getElementById('paymentModal');
-  modal.style.display = 'block';
-
-  document.getElementById('payStatus').innerHTML = '';
-
-  // базовая сумма
-  document.getElementById('payAmount').innerText =
-    Number(selectedPack.uah).toFixed(2) + " грн";
-
-  // получаем user id
   const user = tg?.initDataUnsafe?.user;
-  console.log("TG USER:", user);
 
   if (!user || !user.id) {
+    document.getElementById('paymentModal').style.display = 'block';
     document.getElementById('payStatus').innerHTML =
-      "<div class='error'>Відкрийте Mini App через офіційний Telegram</div>";
+      "<div class='error'>Mini App потрібно відкривати через Telegram</div>";
     return;
   }
 
@@ -675,18 +743,24 @@ async function startCardPayment() {
     console.log("ORDER:", data);
 
     if (!data.id) {
+      document.getElementById('paymentModal').style.display = 'block';
       document.getElementById('payStatus').innerHTML =
         "<div class='error'>Помилка створення замовлення</div>";
       return;
     }
 
-    // 🔥 ВАЖНО — ОБНОВЛЯЕМ СУММУ
+    const modal = document.getElementById('paymentModal');
+    modal.style.display = 'block';
+
+    document.getElementById('payStatus').innerHTML = '';
+    document.getElementById('payTimer').innerText = '10:00';
     document.getElementById('payAmount').innerText =
       Number(data.amount).toFixed(2) + " грн";
 
     const orderId = data.id;
-
     let timeLeft = 600;
+    let polling;
+
     const timerEl = document.getElementById('payTimer');
 
     const timer = setInterval(() => {
@@ -708,7 +782,7 @@ async function startCardPayment() {
       }
     }, 1000);
 
-    const polling = setInterval(async () => {
+    polling = setInterval(async () => {
       const r = await fetch(`${API_BASE}/api/order-status?id=${orderId}`);
       const d = await r.json();
 
@@ -718,16 +792,17 @@ async function startCardPayment() {
         clearInterval(timer);
         clearInterval(polling);
 
-        document.getElementById('payStatus').innerHTML =
-          "<div class='success'>Оплачено ✅</div>";
+        await loadActualBalance();
 
-        setTimeout(() => location.reload(), 1200);
+        document.getElementById('payStatus').innerHTML =
+          "<div class='success'>Оплачено ✅ Баланс оновлено</div>";
       }
     }, 3000);
 
   } catch (e) {
     console.error(e);
 
+    document.getElementById('paymentModal').style.display = 'block';
     document.getElementById('payStatus').innerHTML =
       "<div class='error'>Помилка з'єднання</div>";
   }
