@@ -505,6 +505,23 @@ const urlParams = new URLSearchParams(window.location.search);
 document.getElementById('balanceVal').innerHTML =
   `${urlParams.get('balance') || '0'} <span>🌟</span>`;
 
+async function loadActualBalance() {
+  const user = tg?.initDataUnsafe?.user;
+  if (!user || !user.id) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/balance?user_id=${user.id}`);
+    const data = await res.json();
+
+    document.getElementById('balanceVal').innerHTML =
+      `${data.balance || 0} <span>🌟</span>`;
+  } catch (e) {
+    console.error("balance load error:", e);
+  }
+}
+
+loadActualBalance();
+
 const firstPack = document.querySelector('.pack');
 let selectedPack = {
   id: firstPack.dataset.id,
