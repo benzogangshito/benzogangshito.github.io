@@ -684,7 +684,7 @@ function updateBtn() {
   }
 }
 
-document.getElementById('payBtn').addEventListener('click', () => {
+document.getElementById('payBtn').addEventListener('click', async () => {
   console.log("PAY CLICK", { agreed, selectedMethod, selectedPack });
 
   if (!agreed) return;
@@ -694,31 +694,71 @@ document.getElementById('payBtn').addEventListener('click', () => {
     return;
   }
 
+  const user = tg?.initDataUnsafe?.user;
+  if (!user || !user.id) {
+    alert('Mini App потрібно відкривати через Telegram');
+    return;
+  }
+
   const btn = document.getElementById('payBtn');
   btn.classList.add('loading');
   btn.disabled = true;
 
-  const payload = JSON.stringify({
-    action: 'topup',
-    pack_id: selectedPack.id,
-    method: selectedMethod,
-    credits: selectedPack.credits,
-    stars: selectedPack.stars,
-  });
+  try {
+    if (selectedMethod === 'stars') {
+      const res = await fetch(`${API_BASE}/api/create-stars-invoice`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.id,
+          pack_id: selectedPack.id
+        })
+      });
 
-  if (tg && tg.sendData) {
-    try {
-      tg.sendData(payload);
-    } catch (e) {
-      console.error('sendData error:', e);
-      btn.classList.remove('loading');
-      btn.disabled = false;
-      alert('Помилка. Відкрийте через Telegram бота.');
+      const data = await res.json();
+      console.log('STARS RESPONSE:', data);
+
+      if (!data.ok || !data.invoice_link) {
+        throw new Error('Не вдалося створити Stars invoice');
+      }
+
+      if (tg && tg.openInvoice) {
+        tg.openInvoice(data.invoice_link);
+      } else {
+        window.location.href = data.invoice_link;
+      }
     }
-  } else {
+
+    if (selectedMethod === 'crypto') {
+      const res = await fetch(`${API_BASE}/api/create-crypto-invoice`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.id,
+          pack_id: selectedPack.id
+        })
+      });
+
+      const data = await res.json();
+      console.log('CRYPTO RESPONSE:', data);
+
+      if (!data.ok || !data.pay_url) {
+        throw new Error('Не вдалося створити Crypto invoice');
+      }
+
+      if (tg && tg.openTelegramLink) {
+        tg.openTelegramLink(data.pay_url);
+      } else {
+        window.open(data.pay_url, '_blank');
+      }
+    }
+  } catch (e) {
+    console.error('payment error:', e);
+    alert('Помилка оплати: ' + (e.message || 'unknown'));
+  } finally {
     btn.classList.remove('loading');
     btn.disabled = false;
-    alert('Тест: ' + payload + '\n\nУ Telegram боті тут прийде інвойс на оплату.');
+    updateBtn();
   }
 });
 
