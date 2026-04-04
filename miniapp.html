@@ -5,257 +5,723 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Поповнення</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #08080a;
-  --surface: #111115;
-  --surface2: #1a1a20;
-  --accent: #c8a0ff;
-  --accent2: #ff6eb4;
-  --gold: #ffd166;
-  --text: #f0eeff;
-  --muted: #6b6880;
-  --r: 18px;
+  --bg: #06070b;
+  --bg-2: #0a0b12;
+  --surface: rgba(18, 20, 30, 0.92);
+  --surface-2: rgba(24, 27, 40, 0.94);
+  --surface-3: rgba(31, 35, 53, 0.96);
+  --stroke: rgba(255, 255, 255, 0.08);
+  --stroke-strong: rgba(200, 160, 255, 0.28);
+  --accent: #c89cff;
+  --accent-2: #ff6ab8;
+  --accent-3: #7f8cff;
+  --gold: #ffd66b;
+  --success: #49d17d;
+  --danger: #ff7474;
+  --text: #f5f3ff;
+  --muted: #9a97b4;
+  --muted-2: #75718c;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+  --radius: 22px;
+  --radius-sm: 16px;
+  --safe-bottom: max(20px, env(safe-area-inset-bottom));
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  min-height: 100%;
+}
 
 body {
-  background: var(--bg);
+  background:
+    radial-gradient(circle at top center, rgba(200,156,255,0.18), transparent 30%),
+    radial-gradient(circle at 100% 20%, rgba(127,140,255,0.16), transparent 28%),
+    linear-gradient(180deg, var(--bg-2), var(--bg));
   color: var(--text);
   font-family: 'Inter', sans-serif;
-  min-height: 100vh;
   overflow-x: hidden;
-  padding-bottom: 40px;
+}
+
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  inset: auto;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(60px);
 }
 
 body::before {
-  content: '';
-  position: fixed;
-  top: -100px; left: 50%;
-  transform: translateX(-50%);
-  width: 500px; height: 500px;
-  background: radial-gradient(ellipse, rgba(200,160,255,0.08) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
+  width: 220px;
+  height: 220px;
+  background: rgba(200,156,255,0.1);
+  top: 40px;
+  left: -50px;
 }
 
-.wrap { position: relative; z-index: 1; padding: 0 16px; }
-
-.header {
-  text-align: center;
-  padding: 28px 0 20px;
-}
-.header .icon {
-  width: 64px; height: 64px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  border-radius: 20px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 30px;
-  margin-bottom: 14px;
-  box-shadow: 0 0 40px rgba(200,160,255,0.3);
-}
-.header h1 {
-  font-family: 'Unbounded', sans-serif;
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  background: linear-gradient(90deg, var(--accent), var(--accent2));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.header p {
-  font-size: 13px;
-  color: var(--muted);
-  margin-top: 4px;
+body::after {
+  width: 260px;
+  height: 260px;
+  background: rgba(255,106,184,0.08);
+  right: -70px;
+  top: 220px;
 }
 
-.balance-bar {
+.wrap {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 480px);
+  margin: 0 auto;
+  padding: 20px 16px calc(130px + var(--safe-bottom));
+}
+
+.card {
   background: var(--surface);
-  border: 1px solid rgba(200,160,255,0.12);
-  border-radius: var(--r);
-  padding: 14px 18px;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.hero {
+  position: relative;
+  padding: 26px 20px 20px;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, rgba(200,156,255,0.12), rgba(255,106,184,0.05) 45%, transparent 80%);
+  pointer-events: none;
+}
+
+.hero-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
-}
-.balance-bar .label { font-size: 13px; color: var(--muted); }
-.balance-bar .val {
-  font-family: 'Unbounded', sans-serif;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--gold);
-}
-.balance-bar .val span { font-size: 11px; font-weight: 400; color: var(--muted); margin-left: 4px; }
-
-.sec-label {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 10px;
-}
-
-.packs { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
-
-.pack {
-  background: var(--surface);
-  border: 1.5px solid rgba(255,255,255,0.06);
-  border-radius: var(--r);
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  transition: border-color 0.18s, background 0.18s, transform 0.1s;
+  gap: 14px;
   position: relative;
-  overflow: hidden;
-}
-.pack::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(200,160,255,0.04), transparent);
-  opacity: 0;
-  transition: opacity 0.18s;
-}
-.pack.active {
-  border-color: var(--accent);
-  background: rgba(200,160,255,0.07);
-}
-.pack.active::before { opacity: 1; }
-.pack:active { transform: scale(0.98); }
-
-.pack.popular::after {
-  content: 'ХІТ';
-  position: absolute;
-  top: 8px; right: 8px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  color: white;
-  font-family: 'Unbounded', sans-serif;
-  font-size: 8px;
-  font-weight: 800;
-  padding: 3px 7px;
-  border-radius: 6px;
+  z-index: 1;
 }
 
-.radio-dot {
-  width: 20px; height: 20px;
-  border: 2px solid var(--muted);
-  border-radius: 50%;
-  flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  transition: border-color 0.18s;
-}
-.pack.active .radio-dot {
-  border-color: var(--accent);
-  background: var(--accent);
-}
-.pack.active .radio-dot::after {
-  content: '';
-  width: 8px; height: 8px;
-  background: white;
-  border-radius: 50%;
-}
-
-.pack-info { flex: 1; }
-.pack-name {
-  font-size: 15px;
-  font-weight: 500;
+.brand {
   display: flex;
   align-items: center;
-  gap: 6px;
-}
-.pack-name .coin-emoji { font-size: 16px; }
-.pack-sub {
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 2px;
-}
-.pack-sub.discount { color: #4ecb71; }
-
-.pack-price { text-align: right; }
-.pack-price .stars {
-  font-family: 'Unbounded', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--gold);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  justify-content: flex-end;
-}
-.pack-price .usd {
-  font-size: 11px;
-  color: var(--muted);
-  margin-top: 2px;
-  text-align: right;
+  gap: 14px;
 }
 
-.pay-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
+.brand-mark {
+  width: 58px;
+  height: 58px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+  font-size: 28px;
+  box-shadow: 0 18px 42px rgba(200,156,255,0.34);
 }
 
-.pay-box {
-  background: #0f1017;
-  padding: 22px 18px 18px;
-  border-radius: 24px;
-  width: calc(100% - 32px);
-  max-width: 360px;
-  text-align: center;
-  animation: fadeUp 0.3s ease;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+.brand-copy h1 {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 22px;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+}
+
+.brand-copy p {
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.balance-pill {
+  padding: 10px 12px;
+  min-width: 108px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  text-align: right;
+}
+
+.balance-pill .label {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.balance-pill .value {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 15px;
+  color: var(--gold);
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 18px;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-stat {
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.06);
 }
 
-.pay-head {
-  margin-bottom: 16px;
+.hero-stat strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.hero-stat span {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.section {
+  margin-top: 18px;
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 15px;
+  letter-spacing: -0.03em;
+}
+
+.section-sub {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.packs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pack {
+  position: relative;
+  padding: 16px;
+  border-radius: 22px;
+  background: var(--surface-2);
+  border: 1px solid rgba(255,255,255,0.07);
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.16s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.pack:active { transform: scale(0.985); }
+
+.pack.active {
+  border-color: var(--stroke-strong);
+  background: linear-gradient(180deg, rgba(200,156,255,0.12), rgba(255,255,255,0.03));
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
+}
+
+.pack-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pack-radio {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.18);
+  display: grid;
+  place-items: center;
+}
+
+.pack.active .pack-radio {
+  border-color: var(--accent);
+  background: rgba(200,156,255,0.18);
+}
+
+.pack.active .pack-radio::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+
+.pack-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.pack-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.pack-meta {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.meta-chip {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.meta-chip.good {
+  color: #81e9a5;
+  background: rgba(73,209,125,0.1);
+}
+
+.pack-price {
+  text-align: right;
+}
+
+.pack-price strong {
+  display: block;
+  font-family: 'Unbounded', sans-serif;
+  font-size: 15px;
+  color: var(--gold);
+}
+
+.pack-price span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.methods {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.method {
+  padding: 14px 12px;
+  border-radius: 20px;
+  background: var(--surface-2);
+  border: 1px solid rgba(255,255,255,0.07);
+  cursor: pointer;
+  transition: transform 0.16s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.method:active { transform: scale(0.985); }
+
+.method.active {
+  border-color: var(--stroke-strong);
+  background: linear-gradient(180deg, rgba(127,140,255,0.12), rgba(255,255,255,0.03));
+}
+
+.method-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.method-icon {
+  font-size: 26px;
+}
+
+.method-state {
+  font-size: 10px;
+  color: var(--muted-2);
+}
+
+.method strong {
+  display: block;
+  font-size: 13px;
+}
+
+.method span {
+  display: block;
+  font-size: 11px;
+  line-height: 1.4;
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.summary {
+  padding: 16px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: center;
+}
+
+.summary-left strong {
+  display: block;
+  font-size: 15px;
+  margin-bottom: 5px;
+}
+
+.summary-left span {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.summary-right {
+  text-align: right;
+}
+
+.summary-right .big {
+  display: block;
+  font-family: 'Unbounded', sans-serif;
+  font-size: 18px;
+  color: var(--gold);
+}
+
+.summary-right .small {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.trust-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.trust-item {
+  padding: 14px 12px;
+  border-radius: 18px;
+  background: var(--surface-2);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.trust-item strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.trust-item span {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.info-item {
+  padding: 15px 16px;
+  border-radius: 18px;
+  background: var(--surface-2);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.info-item strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.info-item span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.faq {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.faq-item {
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--surface-2);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.faq-item strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.faq-item span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.terms-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 15px 16px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+}
+
+.custom-check {
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.custom-check.checked {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-color: transparent;
+}
+
+.custom-check.checked::after {
+  content: '✓';
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.terms-text {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.terms-text a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.sticky-pay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  padding: 12px 16px calc(12px + var(--safe-bottom));
+  background: linear-gradient(180deg, rgba(6,7,11,0), rgba(6,7,11,0.86) 30%, rgba(6,7,11,0.98));
+  backdrop-filter: blur(12px);
+}
+
+.sticky-inner {
+  width: min(100%, 480px);
+  margin: 0 auto;
+  border-radius: 22px;
+  background: rgba(16,18,28,0.92);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.34);
+  padding: 14px;
+}
+
+.sticky-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.sticky-top .left strong,
+.sticky-top .right strong {
+  display: block;
+  font-size: 13px;
+}
+
+.sticky-top .left span,
+.sticky-top .right span {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.sticky-top .right {
+  text-align: right;
+}
+
+.pay-btn {
+  width: 100%;
+  border: 0;
+  border-radius: 18px;
+  padding: 18px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: white;
+  font-family: 'Unbounded', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 14px 34px rgba(200,156,255,0.28);
+}
+
+.pay-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.pay-btn.loading::after {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-left: 10px;
+  vertical-align: -2px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.45);
+  border-top-color: white;
+  animation: spin .72s linear infinite;
+}
+
+.toast-wrap {
+  position: fixed;
+  top: 16px;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+.toast {
+  min-width: min(100%, 430px);
+  max-width: 480px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(16,18,28,0.94);
+  box-shadow: 0 20px 48px rgba(0,0,0,0.35);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+  transform: translateY(-12px);
+  opacity: 0;
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast.success { border-color: rgba(73,209,125,0.28); }
+.toast.error { border-color: rgba(255,116,116,0.28); }
+.toast.info { border-color: rgba(200,156,255,0.28); }
+
+#paymentModal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+
+.pay-modal {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.74);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.pay-box {
+  width: min(100%, 380px);
+  border-radius: 26px;
+  background: linear-gradient(180deg, #10121c, #0d0f17);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 22px 18px 18px;
+  box-shadow: 0 28px 80px rgba(0,0,0,0.46);
 }
 
 .pay-badge {
   display: inline-block;
+  margin-bottom: 12px;
   padding: 6px 12px;
   border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #fff;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
 }
 
 .amount {
   font-family: 'Unbounded', sans-serif;
   font-size: 34px;
-  line-height: 1.05;
-  letter-spacing: -1px;
-  margin-bottom: 6px;
-  color: #fff;
+  line-height: 1.06;
+  letter-spacing: -0.06em;
 }
 
 .pay-sub {
-  font-size: 14px;
+  margin-top: 8px;
   color: var(--muted);
-  margin-bottom: 10px;
+  font-size: 13px;
 }
 
 .card-wrap {
-  background: rgba(255,255,255,0.03);
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 18px;
-  padding: 14px 12px;
-  margin: 14px 0 12px;
 }
 
 .card-label {
@@ -267,308 +733,376 @@ body::before {
 .card-number {
   font-size: 24px;
   line-height: 1.15;
-  letter-spacing: 0.5px;
-  color: #fff;
+  letter-spacing: 0.03em;
+  font-weight: 700;
   cursor: pointer;
   user-select: all;
-  font-weight: 600;
   word-break: break-word;
 }
 
 .card-hint {
+  margin-top: 8px;
   font-size: 12px;
   color: var(--muted);
-  margin-top: 8px;
 }
 
 .pay-warning {
-  background: rgba(255, 209, 102, 0.08);
-  border: 1px solid rgba(255, 209, 102, 0.16);
-  border-radius: 16px;
-  padding: 12px;
-  margin: 12px 0 10px;
-  text-align: left;
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255,214,107,0.08);
+  border: 1px solid rgba(255,214,107,0.16);
 }
 
 .warn-title {
+  color: var(--gold);
   font-size: 13px;
   font-weight: 700;
-  color: var(--gold);
   margin-bottom: 6px;
 }
 
 .warn-text {
-  font-size: 14px;
-  line-height: 1.45;
-  color: #eae6ff;
-}
-
-.timer {
-  margin-top: 4px;
-  color: var(--accent);
-  font-weight: 700;
-  font-size: 28px;
-  line-height: 1;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #f0ebff;
 }
 
 .spinner {
-  margin: 18px auto 14px;
   width: 42px;
   height: 42px;
-  border: 4px solid rgba(255,255,255,0.1);
-  border-top: 4px solid var(--accent);
+  margin: 18px auto 12px;
   border-radius: 50%;
+  border: 4px solid rgba(255,255,255,0.12);
+  border-top-color: var(--accent);
   animation: spin 1s linear infinite;
+}
+
+.timer {
+  text-align: center;
+  font-family: 'Unbounded', sans-serif;
+  font-size: 28px;
+  color: var(--accent);
 }
 
 .success,
 .error {
   margin-top: 14px;
-  font-size: 15px;
-  line-height: 1.35;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.45;
 }
 
-.success { color: #4ecb71; }
-.error { color: #ff6b6b; }
+.success { color: var(--success); }
+.error { color: var(--danger); }
 
-.methods { display: flex; gap: 8px; margin-bottom: 24px; }
-.method {
-  flex: 1;
-  background: var(--surface);
-  border: 1.5px solid rgba(255,255,255,0.06);
-  border-radius: var(--r);
-  padding: 14px 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: border-color 0.18s, background 0.18s, transform 0.1s;
-}
-.method.active {
-  border-color: var(--accent);
-  background: rgba(200,160,255,0.07);
-}
-.method:active { transform: scale(0.97); }
-.method .m-icon { font-size: 24px; }
-.method .m-name { font-size: 12px; font-weight: 500; }
-.method .m-desc { font-size: 10px; color: var(--muted); text-align: center; }
-
-.terms-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 20px;
-  cursor: pointer;
-}
-.custom-check {
-  width: 20px; height: 20px;
-  border: 2px solid var(--muted);
-  border-radius: 6px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.18s;
-  margin-top: 1px;
-}
-.custom-check.checked {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-.custom-check.checked::after {
-  content: '✓';
-  color: white;
-  font-size: 12px;
-  font-weight: 700;
-}
-.terms-text {
-  font-size: 12px;
-  color: var(--muted);
-  line-height: 1.5;
-}
-.terms-text a { color: var(--accent); text-decoration: none; }
-
-.pay-btn {
-  width: 100%;
-  padding: 18px;
-  border: none;
-  border-radius: var(--r);
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  color: white;
-  font-family: 'Unbounded', sans-serif;
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  cursor: pointer;
-  transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
-  box-shadow: 0 8px 30px rgba(200,160,255,0.3);
-  position: relative;
-  overflow: hidden;
-}
-.pay-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(255,255,255,0.15);
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-.pay-btn:not(:disabled):hover::before { opacity: 1; }
-.pay-btn:not(:disabled):active { transform: scale(0.98); }
-.pay-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-  box-shadow: none;
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-.pay-btn.loading::after {
-  content: '';
-  width: 18px; height: 18px;
-  border: 2.5px solid rgba(255,255,255,0.4);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  display: inline-block;
-  vertical-align: middle;
-  margin-left: 8px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 420px) {
+  .hero-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
+  .balance-pill {
+    width: 100%;
+    text-align: left;
+  }
+
+  .methods,
+  .trust-grid,
+  .hero-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-right,
+  .sticky-top .right {
+    text-align: left;
+  }
 }
-.wrap > * { animation: fadeUp 0.4s ease both; }
-.header        { animation-delay: 0.0s; }
-.balance-bar   { animation-delay: 0.05s; }
-.packs         { animation-delay: 0.12s; }
-.methods       { animation-delay: 0.2s; }
-.terms-row     { animation-delay: 0.25s; }
-.pay-btn       { animation-delay: 0.28s; }
 </style>
 </head>
 <body>
+<div class="toast-wrap"><div id="toast" class="toast"></div></div>
 
 <div class="wrap">
+  <section class="card hero">
+    <div class="hero-top">
+      <div class="brand">
+        <div class="brand-mark">✦</div>
+        <div class="brand-copy">
+          <h1>Поповнення балансу</h1>
+          <p>Швидка оплата всередині Telegram. Баланс зараховується автоматично після успішного платежу.</p>
+        </div>
+      </div>
+      <div class="balance-pill">
+        <span class="label">Поточний баланс</span>
+        <span class="value" id="balanceVal">0 🌟</span>
+      </div>
+    </div>
 
-  <div class="header">
-    <div class="icon">🌟</div>
-    <h1>Поповнення балансу</h1>
-    <p>Більше зірок — більше можливостей</p>
+    <div class="hero-grid">
+      <div class="hero-stat">
+        <strong>Миттєво</strong>
+        <span>Stars і Crypto відкривають оплату одразу без ручних дій.</span>
+      </div>
+      <div class="hero-stat">
+        <strong>Безпечно</strong>
+        <span>Оплата проходить через офіційні платіжні канали Telegram і CryptoBot.</span>
+      </div>
+      <div class="hero-stat">
+        <strong>Прозоро</strong>
+        <span>Перед оплатою бачиш суму, пакет і спосіб поповнення.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-title">Оберіть пакет</div>
+        <div class="section-sub">Підійде для швидкого тесту або для активного використання.</div>
+      </div>
+    </div>
+
+    <div class="packs" id="packs">
+      <div class="pack active" data-id="pack_10" data-credits="10" data-stars="99" data-uah="1" data-note="Швидкий старт для першої покупки">
+        <div class="pack-radio"></div>
+        <div class="pack-main">
+          <div class="pack-title">🌟 10 зірок</div>
+          <div class="pack-meta">
+            <span class="meta-chip">~1 генерація фото</span>
+            <span class="meta-chip">Стартовий</span>
+          </div>
+        </div>
+        <div class="pack-price">
+          <strong>⭐ 99</strong>
+          <span>~1 ₴</span>
+        </div>
+      </div>
+
+      <div class="pack active-false" data-id="pack_25" data-credits="25" data-stars="229" data-uah="124" data-note="Оптимальний баланс ціни та обсягу">
+        <div class="pack-badge">Хіт</div>
+        <div class="pack-radio"></div>
+        <div class="pack-main">
+          <div class="pack-title">🌟 25 зірок</div>
+          <div class="pack-meta">
+            <span class="meta-chip">~2-3 генерації</span>
+            <span class="meta-chip good">Економія 8%</span>
+          </div>
+        </div>
+        <div class="pack-price">
+          <strong>⭐ 229</strong>
+          <span>~124 ₴</span>
+        </div>
+      </div>
+
+      <div class="pack" data-id="pack_60" data-credits="60" data-stars="499" data-uah="270" data-note="Для тих, хто користується регулярно">
+        <div class="pack-radio"></div>
+        <div class="pack-main">
+          <div class="pack-title">🌟 60 зірок</div>
+          <div class="pack-meta">
+            <span class="meta-chip">~6 генерацій</span>
+            <span class="meta-chip good">Економія 16%</span>
+          </div>
+        </div>
+        <div class="pack-price">
+          <strong>⭐ 499</strong>
+          <span>~270 ₴</span>
+        </div>
+      </div>
+
+      <div class="pack" data-id="pack_150" data-credits="150" data-stars="1099" data-uah="595" data-note="Максимальна вигода для активного використання">
+        <div class="pack-radio"></div>
+        <div class="pack-main">
+          <div class="pack-title">🌟 150 зірок</div>
+          <div class="pack-meta">
+            <span class="meta-chip">~15 генерацій</span>
+            <span class="meta-chip good">Економія 27%</span>
+          </div>
+        </div>
+        <div class="pack-price">
+          <strong>⭐ 1099</strong>
+          <span>~595 ₴</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-title">Спосіб оплати</div>
+        <div class="section-sub">Вибери зручний варіант — логіка оплати залежить від методу.</div>
+      </div>
+    </div>
+
+    <div class="methods">
+      <div class="method active" data-method="stars">
+        <div class="method-top">
+          <span class="method-icon">⭐</span>
+          <span class="method-state">Telegram</span>
+        </div>
+        <strong>Telegram Stars</strong>
+        <span>Найшвидший спосіб. Оплата відкривається прямо в Telegram.</span>
+      </div>
+
+      <div class="method" data-method="crypto">
+        <div class="method-top">
+          <span class="method-icon">💎</span>
+          <span class="method-state">CryptoBot</span>
+        </div>
+        <strong>CryptoBot</strong>
+        <span>Зручно для USDT, BTC та інших криптовалют через CryptoBot.</span>
+      </div>
+
+      <div class="method" data-method="card">
+        <div class="method-top">
+          <span class="method-icon">💳</span>
+          <span class="method-state">Переводом</span>
+        </div>
+        <strong>Карта</strong>
+        <span>Створюємо точну суму для автоматичного зарахування без ручної перевірки.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section card summary">
+    <div class="summary-grid">
+      <div class="summary-left">
+        <strong id="summaryTitle">10 зірок · Telegram Stars</strong>
+        <span id="summaryText">Швидкий старт для першої покупки. Після оплати баланс оновиться автоматично.</span>
+      </div>
+      <div class="summary-right">
+        <span class="big" id="summaryPrice">⭐ 99</span>
+        <span class="small" id="summarySecondary">~1 ₴</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <label class="terms-row" id="termsRow">
+      <div class="custom-check" id="checkBox"></div>
+      <span class="terms-text">
+        Я приймаю <a href="#">умови використання</a>, підтверджую, що мені виповнилось 18 років, і розумію, що баланс зараховується тільки після успішного підтвердження оплати.
+      </span>
+    </label>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-title">Чому це зручно</div>
+        <div class="section-sub">Коротко про те, що отримаєш після оплати.</div>
+      </div>
+    </div>
+
+    <div class="trust-grid">
+      <div class="trust-item">
+        <strong>Автозарахування</strong>
+        <span>Баланс оновлюється автоматично після успішного платежу.</span>
+      </div>
+      <div class="trust-item">
+        <strong>Прозора сума</strong>
+        <span>Перед підтвердженням завжди видно точну суму та пакет.</span>
+      </div>
+      <div class="trust-item">
+        <strong>3 способи оплати</strong>
+        <span>Обери Stars, CryptoBot або картку — залежно від того, що зручніше.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-title">Як проходить оплата</div>
+        <div class="section-sub">Щоб усе було зрозуміло ще до натискання кнопки.</div>
+      </div>
+    </div>
+
+    <div class="info-list">
+      <div class="info-item">
+        <strong>Telegram Stars</strong>
+        <span>Після натискання відкриється вбудоване вікно Telegram з інвойсом. Підтверджуєш оплату — і баланс зараховується автоматично.</span>
+      </div>
+      <div class="info-item">
+        <strong>CryptoBot</strong>
+        <span>Відкриється посилання на оплату в CryptoBot. Після успішного платежу баланс оновлюється в системі.</span>
+      </div>
+      <div class="info-item">
+        <strong>Карта</strong>
+        <span>Система створює точну суму до копійки. Її потрібно сплатити саме в такому вигляді для автоматичного зарахування.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-title">FAQ</div>
+        <div class="section-sub">Найпопулярніші питання перед оплатою.</div>
+      </div>
+    </div>
+
+    <div class="faq">
+      <div class="faq-item">
+        <strong>Коли оновиться баланс?</strong>
+        <span>Зазвичай одразу після підтвердження платежу. Для картки сторінка сама перевіряє статус і покаже успішне зарахування.</span>
+      </div>
+      <div class="faq-item">
+        <strong>Що робити, якщо оплата пройшла, а баланс не змінився?</strong>
+        <span>Спочатку дочекайся кількох секунд і перезавантаж баланс у Mini App. Якщо затримка зберігається, звернись у підтримку з деталями платежу.</span>
+      </div>
+      <div class="faq-item">
+        <strong>Який спосіб найзручніший?</strong>
+        <span>Для більшості користувачів — Telegram Stars. Якщо зручніше працювати з криптою, використовуй CryptoBot. Картка підійде, якщо потрібен класичний переказ.</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="sticky-pay">
+  <div class="sticky-inner">
+    <div class="sticky-top">
+      <div class="left">
+        <strong id="ctaPack">10 зірок</strong>
+        <span id="ctaMethod">Telegram Stars</span>
+      </div>
+      <div class="right">
+        <strong id="ctaPrice">⭐ 99</strong>
+        <span id="ctaHint">~1 ₴</span>
+      </div>
+    </div>
+    <button class="pay-btn" id="payBtn" disabled>Підтвердіть умови, щоб оплатити</button>
   </div>
-
-  <div class="balance-bar">
-    <span class="label">Поточний баланс</span>
-    <span class="val" id="balanceVal">0 <span>🌟</span></span>
-  </div>
-
-  <div class="sec-label">Оберіть пакет</div>
-  <div class="packs" id="packs">
-    <div class="pack active" data-id="pack_10" data-credits="10" data-stars="99" data-uah="1">
-      <div class="radio-dot"></div>
-      <div class="pack-info">
-        <div class="pack-name"><span class="coin-emoji">🌟</span> 10 Зірок</div>
-        <div class="pack-sub">~1 генерація фото</div>
-      </div>
-      <div class="pack-price">
-        <div class="stars">⭐ 99</div>
-        <div class="usd">~1 ₴</div>
-      </div>
-    </div>
-
-    <div class="pack popular" data-id="pack_25" data-credits="25" data-stars="229" data-uah="124">
-      <div class="radio-dot"></div>
-      <div class="pack-info">
-        <div class="pack-name"><span class="coin-emoji">🌟</span> 25 Зірок</div>
-        <div class="pack-sub discount">Економія 8%</div>
-      </div>
-      <div class="pack-price">
-        <div class="stars">⭐ 229</div>
-        <div class="usd">~124 ₴</div>
-      </div>
-    </div>
-
-    <div class="pack" data-id="pack_60" data-credits="60" data-stars="499" data-uah="270">
-      <div class="radio-dot"></div>
-      <div class="pack-info">
-        <div class="pack-name"><span class="coin-emoji">🌟</span> 60 Зірок</div>
-        <div class="pack-sub discount">Економія 16%</div>
-      </div>
-      <div class="pack-price">
-        <div class="stars">⭐ 499</div>
-        <div class="usd">~270 ₴</div>
-      </div>
-    </div>
-
-    <div class="pack" data-id="pack_150" data-credits="150" data-stars="1099" data-uah="595">
-      <div class="radio-dot"></div>
-      <div class="pack-info">
-        <div class="pack-name"><span class="coin-emoji">🌟</span> 150 Зірок</div>
-        <div class="pack-sub discount">Економія 27%</div>
-      </div>
-      <div class="pack-price">
-        <div class="stars">⭐ 1099</div>
-        <div class="usd">~595 ₴</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="sec-label">Спосіб оплати</div>
-  <div class="methods">
-    <div class="method active" data-method="stars">
-      <span class="m-icon">⭐</span>
-      <span class="m-name">Telegram Stars</span>
-      <span class="m-desc">Миттєво</span>
-    </div>
-    <div class="method" data-method="crypto">
-      <span class="m-icon">💎</span>
-      <span class="m-name">CryptoBot</span>
-      <span class="m-desc">USDT / BTC</span>
-    </div>
-    <div class="method" data-method="card">
-      <span class="m-icon">💳</span>
-      <span class="m-name">Карта</span>
-      <span class="m-desc">Переводом!</span>
-    </div>
-  </div>
-
-  <label class="terms-row" id="termsRow">
-    <div class="custom-check" id="checkBox"></div>
-    <span class="terms-text">
-      Я приймаю <a href="#">умови використання</a> та підтверджую, що мені виповнилось 18 років
-    </span>
-  </label>
-
-  <button class="pay-btn" id="payBtn" disabled>Оплатити</button>
 </div>
 
 <div id="paymentModal" style="display:none;">
   <div class="pay-modal">
     <div class="pay-box">
-      <div class="pay-head">
-        <div class="pay-badge">Переводом!</div>
-        <div class="amount" id="payAmount">0.00 грн</div>
-        <div class="pay-sub" id="paySub">Сума до оплати</div>
-      </div>
+      <div class="pay-badge">Переводом</div>
+      <div class="amount" id="payAmount">0.00 грн</div>
+      <div class="pay-sub" id="paySub">Сума до оплати</div>
 
       <div class="card-wrap">
         <div class="card-label">Номер картки</div>
         <div class="card-number" id="cardNumber">4441 1110 4788 4568</div>
-        <div class="card-hint">Натисніть, щоб скопіювати</div>
+        <div class="card-hint">Натисни, щоб скопіювати</div>
       </div>
 
       <div class="pay-warning">
         <div class="warn-title">Важливо</div>
-        <div class="warn-text">
-          Оплатіть <b>точно цю суму до копійки</b>, як показано вище.
-          Якщо сума буде іншою, платіж не зарахується автоматично.
-        </div>
+        <div class="warn-text">Оплати <b>точно цю суму до копійки</b>. Якщо сума відрізнятиметься, платіж може не зарахуватися автоматично.</div>
       </div>
 
       <div class="spinner"></div>
       <div class="timer" id="payTimer">10:00</div>
-
       <div id="payStatus"></div>
     </div>
   </div>
@@ -576,42 +1110,19 @@ body::before {
 
 <script>
 const API_BASE = 'https://webhook-paq0.onrender.com';
-
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-if (tg) { tg.ready(); tg.expand(); }
-
-const balanceEl = document.getElementById('balanceVal');
-
-// fallback из URL
-const urlParams = new URLSearchParams(window.location.search);
-balanceEl.innerHTML = `${urlParams.get('balance') || '0'} <span>🌟</span>`;
-
-async function loadActualBalance() {
-  const user = tg?.initDataUnsafe?.user;
-  console.log("TG USER:", user);
-
-  if (!user || !user.id) {
-    console.log("NO USER ID");
-    return;
-  }
-
-  try {
-    const url = `${API_BASE}/api/balance?user_id=${user.id}`;
-    console.log("BALANCE URL:", url);
-
-    const res = await fetch(url);
-    const data = await res.json();
-
-    console.log("BALANCE RESPONSE:", data);
-
-    document.getElementById('balanceVal').innerHTML =
-      `${data.balance || 0} <span>🌟</span>`;
-  } catch (e) {
-    console.error("balance load error:", e);
+if (tg) {
+  tg.ready();
+  tg.expand();
+  if (typeof tg.enableClosingConfirmation === 'function') {
+    tg.enableClosingConfirmation();
   }
 }
 
-loadActualBalance();
+const balanceEl = document.getElementById('balanceVal');
+const toastEl = document.getElementById('toast');
+const urlParams = new URLSearchParams(window.location.search);
+balanceEl.textContent = `${urlParams.get('balance') || '0'} 🌟`;
 
 const firstPack = document.querySelector('.pack');
 let selectedPack = {
@@ -619,12 +1130,82 @@ let selectedPack = {
   credits: firstPack.dataset.credits,
   stars: firstPack.dataset.stars,
   uah: firstPack.dataset.uah,
+  note: firstPack.dataset.note,
 };
 
 let selectedMethod = 'stars';
 let agreed = false;
+let toastTimer = null;
 
-document.querySelectorAll('.pack').forEach(p => {
+function showToast(message, type = 'info') {
+  clearTimeout(toastTimer);
+  toastEl.textContent = message;
+  toastEl.className = `toast ${type} show`;
+  toastTimer = setTimeout(() => {
+    toastEl.className = 'toast';
+  }, 3200);
+}
+
+function methodLabel(method) {
+  if (method === 'stars') return 'Telegram Stars';
+  if (method === 'crypto') return 'CryptoBot';
+  return 'Карта';
+}
+
+function currentPriceLabel() {
+  if (selectedMethod === 'stars') return `⭐ ${selectedPack.stars}`;
+  if (selectedMethod === 'crypto') return '💎 USDT';
+  return `💳 ${selectedPack.uah} ₴`;
+}
+
+function currentSecondaryLabel() {
+  if (selectedMethod === 'stars') return `~${selectedPack.uah} ₴`;
+  if (selectedMethod === 'crypto') return `Пакет: ${selectedPack.credits} зірок`;
+  return `Точна сума до оплати`;
+}
+
+function currentButtonText() {
+  if (!agreed) return 'Підтвердіть умови, щоб оплатити';
+  if (selectedMethod === 'stars') return `Оплатити ⭐ ${selectedPack.stars} Stars (~${selectedPack.uah} ₴)`;
+  if (selectedMethod === 'crypto') return `Оплатити 💎 через CryptoBot`;
+  return `Оплатити 💳 ${selectedPack.uah} ₴`;
+}
+
+function updateSummary() {
+  document.getElementById('summaryTitle').textContent = `${selectedPack.credits} зірок · ${methodLabel(selectedMethod)}`;
+  document.getElementById('summaryText').textContent = `${selectedPack.note}. Після оплати баланс оновиться автоматично.`;
+  document.getElementById('summaryPrice').textContent = currentPriceLabel();
+  document.getElementById('summarySecondary').textContent = currentSecondaryLabel();
+  document.getElementById('ctaPack').textContent = `${selectedPack.credits} зірок`;
+  document.getElementById('ctaMethod').textContent = methodLabel(selectedMethod);
+  document.getElementById('ctaPrice').textContent = currentPriceLabel();
+  document.getElementById('ctaHint').textContent = currentSecondaryLabel();
+}
+
+function updateBtn() {
+  const btn = document.getElementById('payBtn');
+  btn.disabled = !agreed;
+  btn.textContent = currentButtonText();
+  updateSummary();
+}
+
+async function loadActualBalance() {
+  const user = tg?.initDataUnsafe?.user;
+  if (!user || !user.id) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/balance?user_id=${user.id}`);
+    const data = await res.json();
+    balanceEl.textContent = `${data.balance || 0} 🌟`;
+  } catch (e) {
+    console.error('balance load error:', e);
+  }
+}
+
+loadActualBalance();
+updateBtn();
+
+for (const p of document.querySelectorAll('.pack')) {
   p.addEventListener('click', () => {
     document.querySelectorAll('.pack').forEach(x => x.classList.remove('active'));
     p.classList.add('active');
@@ -634,20 +1215,21 @@ document.querySelectorAll('.pack').forEach(p => {
       credits: p.dataset.credits,
       stars: p.dataset.stars,
       uah: p.dataset.uah,
+      note: p.dataset.note,
     };
 
     updateBtn();
   });
-});
+}
 
-document.querySelectorAll('.method').forEach(m => {
+for (const m of document.querySelectorAll('.method')) {
   m.addEventListener('click', () => {
     document.querySelectorAll('.method').forEach(x => x.classList.remove('active'));
     m.classList.add('active');
     selectedMethod = m.dataset.method;
     updateBtn();
   });
-});
+}
 
 document.getElementById('termsRow').addEventListener('click', (e) => {
   if (e.target.tagName === 'A') return;
@@ -659,131 +1241,79 @@ document.getElementById('termsRow').addEventListener('click', (e) => {
 document.getElementById('cardNumber').addEventListener('click', async () => {
   try {
     await navigator.clipboard.writeText(document.getElementById('cardNumber').innerText.trim());
-    document.getElementById('payStatus').innerHTML =
-      "<div class='success'>Карту скопійовано 📋</div>";
+    document.getElementById('payStatus').innerHTML = "<div class='success'>Картку скопійовано 📋</div>";
+    showToast('Номер картки скопійовано', 'success');
   } catch (e) {
     console.error('clipboard error:', e);
+    showToast('Не вдалося скопіювати номер картки', 'error');
   }
 });
 
-function updateBtn() {
-  const btn = document.getElementById('payBtn');
-  btn.disabled = !agreed;
-
-  if (!agreed) {
-    btn.textContent = 'Оплатити';
-    return;
-  }
-
-  if (selectedMethod === 'stars') {
-    btn.textContent = `Оплатити ⭐ ${selectedPack.stars} Stars (~${selectedPack.uah} ₴)`;
-  } else if (selectedMethod === 'crypto') {
-    btn.textContent = `Оплатити 💎 USDT`;
-  } else if (selectedMethod === 'card') {
-    btn.textContent = `Оплатити 💳 ${selectedPack.uah} ₴`;
+function parseMaybeJson(text) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
   }
 }
 
-document.getElementById('payBtn').addEventListener('click', async () => {
-  console.log("PAY CLICK", { agreed, selectedMethod, selectedPack });
+async function createInvoice(endpoint, body) {
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
 
-  if (!agreed) return;
+  const text = await res.text();
+  const data = parseMaybeJson(text);
 
-  if (selectedMethod === 'card') {
-    startCardPayment();
-    return;
+  if (!data) {
+    throw new Error('Сервер повернув некоректну відповідь');
   }
 
-  const user = tg?.initDataUnsafe?.user;
-
-  if (!user || !user.id) {
-    alert('Mini App потрібно відкривати через Telegram');
-    return;
+  if (!data.ok) {
+    throw new Error(data.error || 'Не вдалося створити інвойс');
   }
 
-  const btn = document.getElementById('payBtn');
-  btn.classList.add('loading');
-  btn.disabled = true;
+  return data;
+}
 
-  try {
-    if (selectedMethod === 'stars') {
-      const res = await fetch(`${API_BASE}/api/create-stars-invoice`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: user.id,
-          pack_id: selectedPack.id
-        })
-      });
+async function handleStarsPayment(user) {
+  showToast('Створюємо рахунок для Telegram Stars...', 'info');
 
-      const text = await res.text();
-      console.log('STARS RAW:', text);
+  const data = await createInvoice('/api/create-stars-invoice', {
+    user_id: user.id,
+    pack_id: selectedPack.id
+  });
 
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        throw new Error('Stars API повернув не JSON');
-      }
-
-      if (!res.ok || !data.ok || !data.invoice_link) {
-        throw new Error(data.error || 'Не вдалося створити Stars invoice');
-      }
-
-      if (tg && tg.openInvoice) {
-        tg.openInvoice(data.invoice_link);
-      } else {
-        window.location.href = data.invoice_link;
-      }
-      return;
-    }
-
-    if (selectedMethod === 'crypto') {
-      const res = await fetch(`${API_BASE}/api/create-crypto-invoice`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: user.id,
-          pack_id: selectedPack.id
-        })
-      });
-
-      const text = await res.text();
-      console.log('CRYPTO RAW:', text);
-
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        throw new Error('Crypto API повернув не JSON');
-      }
-
-      if (!res.ok || !data.ok || !data.pay_url) {
-        throw new Error(data.error || 'Не вдалося створити crypto invoice');
-      }
-
-      if (tg && tg.openTelegramLink) {
-        tg.openTelegramLink(data.pay_url);
-      } else {
-        window.open(data.pay_url, '_blank');
-      }
-      return;
-    }
-  } catch (e) {
-    console.error(e);
-    alert('Помилка: ' + e.message);
-  } finally {
-    btn.classList.remove('loading');
-    btn.disabled = false;
-    updateBtn();
+  if (!data.invoice_link) {
+    throw new Error('Не вдалося отримати посилання на оплату');
   }
-});
 
-if (tg && tg.colorScheme === 'light') {
-  document.documentElement.style.setProperty('--bg', '#f5f5f7');
-  document.documentElement.style.setProperty('--surface', '#ffffff');
-  document.documentElement.style.setProperty('--text', '#1a1a2e');
-  document.documentElement.style.setProperty('--muted', '#888');
+  if (tg && typeof tg.openInvoice === 'function') {
+    tg.openInvoice(data.invoice_link);
+  } else {
+    window.location.href = data.invoice_link;
+  }
+}
+
+async function handleCryptoPayment(user) {
+  showToast('Готуємо оплату через CryptoBot...', 'info');
+
+  const data = await createInvoice('/api/create-crypto-invoice', {
+    user_id: user.id,
+    pack_id: selectedPack.id
+  });
+
+  if (!data.pay_url) {
+    throw new Error('Не вдалося отримати посилання на оплату');
+  }
+
+  if (tg && typeof tg.openTelegramLink === 'function') {
+    tg.openTelegramLink(data.pay_url);
+  } else {
+    window.open(data.pay_url, '_blank');
+  }
 }
 
 async function startCardPayment() {
@@ -791,15 +1321,16 @@ async function startCardPayment() {
 
   if (!user || !user.id) {
     document.getElementById('paymentModal').style.display = 'block';
-    document.getElementById('payStatus').innerHTML =
-      "<div class='error'>Mini App потрібно відкривати через Telegram</div>";
+    document.getElementById('payStatus').innerHTML = "<div class='error'>Mini App потрібно відкривати через Telegram</div>";
     return;
   }
 
   try {
+    showToast('Створюємо реквізити для оплати...', 'info');
+
     const res = await fetch(`${API_BASE}/api/create-order`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         amount: Number(selectedPack.uah),
         pack_id: selectedPack.id,
@@ -808,22 +1339,18 @@ async function startCardPayment() {
     });
 
     const data = await res.json();
-    console.log("ORDER:", data);
 
     if (!data.id) {
       document.getElementById('paymentModal').style.display = 'block';
-      document.getElementById('payStatus').innerHTML =
-        "<div class='error'>Помилка створення замовлення</div>";
+      document.getElementById('payStatus').innerHTML = "<div class='error'>Помилка створення замовлення</div>";
       return;
     }
 
     const modal = document.getElementById('paymentModal');
     modal.style.display = 'block';
-
     document.getElementById('payStatus').innerHTML = '';
     document.getElementById('payTimer').innerText = '10:00';
-    document.getElementById('payAmount').innerText =
-      Number(data.amount).toFixed(2) + " грн";
+    document.getElementById('payAmount').innerText = Number(data.amount).toFixed(2) + ' грн';
 
     const orderId = data.id;
     let timeLeft = 600;
@@ -833,20 +1360,14 @@ async function startCardPayment() {
 
     const timer = setInterval(() => {
       timeLeft--;
-
       const m = Math.floor(timeLeft / 60);
       const s = timeLeft % 60;
-
-      timerEl.innerText =
-        String(m).padStart(2, '0') + ":" +
-        String(s).padStart(2, '0');
+      timerEl.innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 
       if (timeLeft <= 0) {
         clearInterval(timer);
         clearInterval(polling);
-
-        document.getElementById('payStatus').innerHTML =
-          "<div class='error'>Час вийшов</div>";
+        document.getElementById('payStatus').innerHTML = "<div class='error'>Час очікування платежу вийшов</div>";
       }
     }, 1000);
 
@@ -854,26 +1375,62 @@ async function startCardPayment() {
       const r = await fetch(`${API_BASE}/api/order-status?id=${orderId}`);
       const d = await r.json();
 
-      console.log("STATUS:", d);
-
-      if (d.status === "paid") {
+      if (d.status === 'paid') {
         clearInterval(timer);
         clearInterval(polling);
-
         await loadActualBalance();
-
-        document.getElementById('payStatus').innerHTML =
-          "<div class='success'>Оплачено ✅ Баланс оновлено</div>";
+        document.getElementById('payStatus').innerHTML = "<div class='success'>Оплачено ✅ Баланс оновлено</div>";
+        showToast('Платіж знайдено, баланс оновлено', 'success');
       }
     }, 3000);
-
   } catch (e) {
     console.error(e);
-
     document.getElementById('paymentModal').style.display = 'block';
-    document.getElementById('payStatus').innerHTML =
-      "<div class='error'>Помилка з'єднання</div>";
+    document.getElementById('payStatus').innerHTML = "<div class='error'>Помилка з'єднання</div>";
+    showToast('Не вдалося створити платіж по картці', 'error');
   }
+}
+
+document.getElementById('payBtn').addEventListener('click', async () => {
+  if (!agreed) return;
+
+  const user = tg?.initDataUnsafe?.user;
+  if (!user || !user.id) {
+    showToast('Mini App потрібно відкривати через Telegram', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('payBtn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  try {
+    if (selectedMethod === 'card') {
+      await startCardPayment();
+    } else if (selectedMethod === 'stars') {
+      await handleStarsPayment(user);
+    } else if (selectedMethod === 'crypto') {
+      await handleCryptoPayment(user);
+    }
+  } catch (e) {
+    console.error(e);
+    showToast(e.message || 'Сталася помилка під час оплати', 'error');
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    updateBtn();
+  }
+});
+
+if (tg && tg.colorScheme === 'light') {
+  document.documentElement.style.setProperty('--bg', '#f2f4fb');
+  document.documentElement.style.setProperty('--bg-2', '#eef1fb');
+  document.documentElement.style.setProperty('--surface', 'rgba(255,255,255,0.96)');
+  document.documentElement.style.setProperty('--surface-2', 'rgba(255,255,255,0.98)');
+  document.documentElement.style.setProperty('--text', '#1d1c29');
+  document.documentElement.style.setProperty('--muted', '#6f6b84');
+  document.documentElement.style.setProperty('--muted-2', '#8c87a4');
+  document.documentElement.style.setProperty('--stroke', 'rgba(29,28,41,0.08)');
 }
 </script>
 </body>
