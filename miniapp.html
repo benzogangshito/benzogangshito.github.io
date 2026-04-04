@@ -707,56 +707,87 @@ document.getElementById('payBtn').addEventListener('click', async () => {
 
   try {
     if (selectedMethod === 'stars') {
-      const res = await fetch(`${API_BASE}/api/create-stars-invoice`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: user.id,
-          pack_id: selectedPack.id
-        })
-      });
+  try {
+    const res = await fetch(`${API_BASE}/api/create-stars-invoice`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: user.id,
+        pack_id: selectedPack.id
+      })
+    });
 
-      const text = await res.text();
-      console.log("STARS RAW:", text);
+    const text = await res.text();
+    console.log("STARS RAW:", text);
 
-      const data = JSON.parse(text);
+    const data = JSON.parse(text);
 
-      if (!data.ok || !data.invoice_link) {
-        throw new Error('Не вдалося створити Stars invoice');
-      }
-
-      if (tg && tg.openInvoice) {
-        tg.openInvoice(data.invoice_link);
-      } else {
-        window.location.href = data.invoice_link;
-      }
+    if (!data.ok || !data.invoice_link) {
+      throw new Error('API error');
     }
+
+    if (tg && tg.openInvoice) {
+      tg.openInvoice(data.invoice_link);
+    } else {
+      window.location.href = data.invoice_link;
+    }
+
+  } catch (e) {
+    console.warn("STARS API failed → fallback", e);
+
+    tg.sendData(JSON.stringify({
+      action: 'pay',
+      method: 'stars',
+      pack_id: selectedPack.id
+    }));
+
+    tg.close(); // важно
+  }
+
+  return;
+}
 
     if (selectedMethod === 'crypto') {
-      const res = await fetch(`${API_BASE}/api/create-crypto-invoice`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: user.id,
-          pack_id: selectedPack.id
-        })
-      });
+    
+  try {
+    const res = await fetch(`${API_BASE}/api/create-crypto-invoice`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: user.id,
+        pack_id: selectedPack.id
+      })
+    });
 
-      const text = await res.text();
-      console.log("CRYPTO RAW:", text);
+    const text = await res.text();
+    console.log("CRYPTO RAW:", text);
 
-      const data = JSON.parse(text);
+    const data = JSON.parse(text);
 
-      if (!data.ok || !data.pay_url) {
-        throw new Error('Не вдалося створити crypto invoice');
-      }
-
-      if (tg && tg.openTelegramLink) {
-        tg.openTelegramLink(data.pay_url);
-      } else {
-        window.open(data.pay_url, '_blank');
-      }
+    if (!data.ok || !data.pay_url) {
+      throw new Error('API error');
     }
+
+    if (tg && tg.openTelegramLink) {
+      tg.openTelegramLink(data.pay_url);
+    } else {
+      window.open(data.pay_url, '_blank');
+    }
+
+  } catch (e) {
+    console.warn("CRYPTO API failed → fallback", e);
+
+    tg.sendData(JSON.stringify({
+      action: 'pay',
+      method: 'crypto',
+      pack_id: selectedPack.id
+    }));
+
+    tg.close(); // важно
+  }
+
+  return;
+}
 
   } catch (e) {
     console.error(e);
