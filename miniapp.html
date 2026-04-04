@@ -465,7 +465,7 @@ body::before {
 
   <div class="sec-label">Оберіть пакет</div>
   <div class="packs" id="packs">
-    <div class="pack active" data-id="pack_10" data-credits="10" data-stars="99" data-uah="65">
+    <div class="pack active" data-id="pack_10" data-credits="10" data-stars="99" data-uah="1">
       <div class="radio-dot"></div>
       <div class="pack-info">
         <div class="pack-name"><span class="coin-emoji">🌟</span> 10 Зірок</div>
@@ -473,7 +473,7 @@ body::before {
       </div>
       <div class="pack-price">
         <div class="stars">⭐ 99</div>
-        <div class="usd">~65 ₴</div>
+        <div class="usd">~1 ₴</div>
       </div>
     </div>
 
@@ -610,7 +610,7 @@ async function loadActualBalance() {
     console.error("balance load error:", e);
   }
 }
-  
+
 loadActualBalance();
 
 const firstPack = document.querySelector('.pack');
@@ -695,6 +695,7 @@ document.getElementById('payBtn').addEventListener('click', async () => {
   }
 
   const user = tg?.initDataUnsafe?.user;
+
   if (!user || !user.id) {
     alert('Mini App потрібно відкривати через Telegram');
     return;
@@ -715,8 +716,10 @@ document.getElementById('payBtn').addEventListener('click', async () => {
         })
       });
 
-      const data = await res.json();
-      console.log('STARS RESPONSE:', data);
+      const text = await res.text();
+      console.log("STARS RAW:", text);
+
+      const data = JSON.parse(text);
 
       if (!data.ok || !data.invoice_link) {
         throw new Error('Не вдалося створити Stars invoice');
@@ -739,11 +742,13 @@ document.getElementById('payBtn').addEventListener('click', async () => {
         })
       });
 
-      const data = await res.json();
-      console.log('CRYPTO RESPONSE:', data);
+      const text = await res.text();
+      console.log("CRYPTO RAW:", text);
+
+      const data = JSON.parse(text);
 
       if (!data.ok || !data.pay_url) {
-        throw new Error('Не вдалося створити Crypto invoice');
+        throw new Error('Не вдалося створити crypto invoice');
       }
 
       if (tg && tg.openTelegramLink) {
@@ -752,9 +757,10 @@ document.getElementById('payBtn').addEventListener('click', async () => {
         window.open(data.pay_url, '_blank');
       }
     }
+
   } catch (e) {
-    console.error('payment error:', e);
-    alert('Помилка оплати: ' + (e.message || 'unknown'));
+    console.error(e);
+    alert("Помилка: " + e.message);
   } finally {
     btn.classList.remove('loading');
     btn.disabled = false;
